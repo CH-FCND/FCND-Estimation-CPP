@@ -3,6 +3,7 @@
 #include "Utility/SimpleConfig.h"
 #include "Utility/StringUtils.h"
 #include "Math/Quaternion.h"
+#include "iostream"
 
 using namespace SLR;
 
@@ -89,13 +90,29 @@ void QuadEstimatorEKF::UpdateFromIMU(V3F accel, V3F gyro)
   //       (Quaternion<float> also has a IntegrateBodyRate function, though this uses quaternions, not Euler angles)
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
-  // SMALL ANGLE GYRO INTEGRATION:
-  // (replace the code below)
-  // make sure you comment it out when you add your own code -- otherwise e.g. you might integrate yaw twice
 
-  float predictedPitch = pitchEst + dtIMU * gyro.y;
-  float predictedRoll = rollEst + dtIMU * gyro.x;
-  ekfState(6) = ekfState(6) + dtIMU * gyro.z;	// yaw
+  // Use rotation matrices for this.  Quaternions will be used elsewhere
+  //Create vectors for rotation matrix
+  // confirm my rotation matrix
+  Mat3x3F rotation;
+  rotation(0,0) = 1;
+  rotation(0,1) = sin(rollEst) * tan(pitchEst);
+  rotation(0,2) = cos(rollEst) * tan(pitchEst);
+  rotation(1,0) = 0;
+  rotation(1,1) = cos(rollEst);
+  rotation(1,2) = -sin(rollEst);
+  rotation(2,0) = 0;
+  rotation(2,1) = sin(rollEst)/cos(pitchEst);
+  rotation(2,2) = cos(rollEst)/cos(pitchEst);
+
+  // apply rotation matrix to get to inertial frame
+  V3F gyroInert = rotation * gyro ;
+
+  // integrate angles in inertial frame
+
+  float predictedPitch = pitchEst + dtIMU * gyroInert.y; // pitch
+  float predictedRoll = rollEst + dtIMU * gyroInert.x;   // roll
+  ekfState(6) = ekfState(6) + dtIMU * gyroInert.z;	      // yaw 
 
   // normalize yaw to -pi .. pi
   if (ekfState(6) > F_PI) ekfState(6) -= 2.f*F_PI;
