@@ -9,6 +9,11 @@ This README is broken down into the following sections:
  - [Tips and Tricks](#tips-and-tricks) - some additional tips and tricks you may find useful along the way
  - [Submission](#submission) - overview of the requirements for your project submission
 
+## Rubric Points ##
+
+Step 1. 
+In order to calculate the standard deviation of the GPS ad Acceleromter sensors the simulator for scenario 6 outputs a .txt file.  I wrote a script to open each file and print the standard deviation for the sample data to the console.  I imported the data, stored it in a numpy array and calculated the standard deviation using the built-in function numpy.std().  My script can be found in std_dev.py.  I ran scenario 6 a few times to get various sets of sample data to confirm repeatibility of my standard deviation calculation.  When investigating the file SimulatedSensors.txt I had more precise standard deviations near the same value, due to lack of rounding on my part.
+
 
 ## Setup ##
 
