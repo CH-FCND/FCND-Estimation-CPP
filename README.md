@@ -1,9 +1,10 @@
 # Estimation Project #
 
-Welcome to the estimation project.  In this project, you will be developing the estimation portion of the controller used in the CPP simulator.  By the end of the project, your simulated quad will be flying with your estimator and your custom controller (from the previous project)!
+Welcome to the estimation project.  In this project, I expanded upon the started code provided by Udacity to develop the estimation portion of the controller used in the CPP simulator.  At the end of the project I integrated my controller and tuned the parameters again to simulate flying with the estimator and custom controller (from the previous project)!
 
 This README is broken down into the following sections:
 
+ - [Rubric Points](#Rubric-Points) - covering the points required in the rubric write-up
  - [Setup](#setup) - the environment and code setup required to get started and a brief overview of the project structure
  - [The Tasks](#the-tasks) - the tasks you will need to complete for the project
  - [Tips and Tricks](#tips-and-tricks) - some additional tips and tricks you may find useful along the way
@@ -11,9 +12,52 @@ This README is broken down into the following sections:
 
 ## Rubric Points ##
 
-Step 1. 
-In order to calculate the standard deviation of the GPS ad Acceleromter sensors the simulator for scenario 6 outputs a .txt file.  I wrote a script to open each file and print the standard deviation for the sample data to the console.  I imported the data, stored it in a numpy array and calculated the standard deviation using the built-in function numpy.std().  My script can be found in std_dev.py.  I ran scenario 6 a few times to get various sets of sample data to confirm repeatibility of my standard deviation calculation.  When investigating the file SimulatedSensors.txt I had more precise standard deviations near the same value, due to lack of rounding on my part.
+Rubric 1. 
+  Provide a Writeup / README that includes all the rubric points and how you addressed each one. You can submit your writeup as markdown or pdf.
+    The writeup / README should include a statement and supporting figures / images that explain how each rubric item was addressed, and specifically where in the code each step was handled.
+  You're reading it!
 
+Rubric 2.
+  Determine the standard deviation of the measurement noise of both GPS X data and Accelerometer X data.
+    The calculated standard deviation should correctly capture ~68% of the sensor measurements. Your writeup should describe the method used for determining the standard deviation given the simulated sensor measurements.
+  
+  In order to calculate the standard deviation of the GPS ad Acceleromter sensors the simulator for scenario 6 outputs a .txt file.  I wrote a script to open each file and print the standard deviation for the sample data to the console.  I imported the data, stored it in a numpy array and calculated the standard deviation using the built-in function numpy.std().  My script can be found in std_dev.py.  I ran scenario 6 a few times to get various sets of sample data to confirm repeatibility of my standard deviation calculation.  When investigating the file SimulatedSensors.txt I had more precise standard deviations near the same value, due to lack of rounding on my part.
+
+Rubric 3.
+  Implement a better rate gyro attitude integration scheme in the UpdateFromIMU() function.
+    The improved integration scheme should result in an attitude estimator of < 0.1 rad for each of the Euler angles for a duration of at least 3 seconds during the simulation. The integration scheme should use quaternions to improve performance over the current simple integration scheme.
+
+  In order to update the IMU measurements the rotation matrix was required to determine the body frame to inertial frame orientation of the gyro measurements to apply and integrate them with the current roll and potch estimates.  In order to ensure the yaw angle is kept within +/- pi radians it is normalized.
+
+Rubric 4.
+  Implement all of the elements of the prediction step for the estimator.
+    The prediction step should include the state update element (PredictState() function), a correct calculation of the Rgb prime matrix, and a proper update of the state covariance. The acceleration should be accounted for as a command in the calculation of gPrime. The covariance update should follow the classic EKF update equation.
+
+  This function uses Quaternions instead of a Rotation matrix to enable the determination of the predicted state.  By integrating the velocity measurements and summing with the existing pos state the predicted pos is updated.  The Attitude Quaternion is used to determine the inertial frame orientation of the acclerometer measurements.  Once the accelerometer measurements are in the intertial frame the are integrated and summed with the current attitude values.  The accelerometer reports specific acceleration so gravity needs to be taken into consideration here.
+
+Rubric 5.
+  Implement the magnetometer update.
+    The update should properly include the magnetometer data into the state. Note that the solution should make sure to correctly measure the angle error between the current state and the magnetometer value (error should be the short way around, not the long way).
+
+  The magnetometer sensor update step simply calls the EKF update function with the measurment vector, measurement covariance matrix, estimated measurement given the state and the transfer function partial derivaive h-prime.  h-prime for a magetometer only affects the yaw measurement so is a state vector with only one '1' in it.  The value of the yaw measurement is constrained to be beteween pi and -pi so that the quad is not hunting for a yaw heading that is multiple rotations away from it's current heading.
+
+Rubric 6.
+  Implement the GPS update.
+    The estimator should correctly incorporate the GPS information to update the current state estimate.
+
+  The update GPS function is a direct measurement of velocity and pose from the GPS unit.  The estimated measurement from the state is therefore merely the current ekfState.  The measurement transfer function is a diagonal Identity matrix with an additional column, and both z and hprime can be updated quickly in a simple for loop to tackle this problem. 
+
+Rubric 7.
+  Meet the performance criteria of each step.
+    For each step of the project, the final estimator should be able to successfully meet the performance criteria with the controller provided. The estimator's parameters should be properly adjusted to satisfy each of the performance criteria elements.
+
+    The quad successfully meets all criteria.
+
+Rubric 8.
+  De-tune your controller to successfully fly the final desired box trajectory with your estimator and realistic sensors.
+    The controller developed in the previous project should be de-tuned to successfully meet the performance criteria of the final scenario (<1m error for entire box flight).
+
+  This step required tuning the controller and was quite interesting.  After slowing down the performance of the vehicle by reducing the proportional gains the vehicle became more stable.  The covariance of the measurement matrix also needed to be tuned to reduce the oscillations in flight.
 
 ## Setup ##
 
