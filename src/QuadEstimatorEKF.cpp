@@ -213,7 +213,21 @@ MatrixXf QuadEstimatorEKF::GetRbgPrime(float roll, float pitch, float yaw)
   //   that your calculations are reasonable
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
+  
+  float phi = roll;
+  float theta = pitch;
+  float psi = yaw;
 
+  RbgPrime(0,0) = -cos(theta)*sin(psi);
+  RbgPrime(0,1) = -sin(phi)*sin(theta)*sin(psi) - cos(phi)*cos(psi);
+  RbgPrime(0,2) = -cos(phi)*sin(theta)*sin(psi) + sin(phi)*cos(psi);
+  RbgPrime(1,0) =  cos(theta)*cos(psi);
+  RbgPrime(1,1) =  sin(phi)*sin(theta)*cos(psi) - cos(phi)*sin(psi);
+  RbgPrime(1,2) =  cos(phi)*sin(theta)*cos(psi) + sin(phi)*sin(psi);
+  RbgPrime(2,0) =  0;
+  RbgPrime(2,1) =  0;
+  RbgPrime(2,2) =  0;
+  
 
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
@@ -252,13 +266,25 @@ void QuadEstimatorEKF::Predict(float dt, V3F accel, V3F gyro)
   // 
 
   // we'll want the partial derivative of the Rbg matrix
-  MatrixXf RbgPrime = GetRbgPrime(rollEst, pitchEst, ekfState(6));
+  MatrixXf c = GetRbgPrime(rollEst, pitchEst, ekfState(6));
 
   // we've created an empty Jacobian for you, currently simply set to identity
   MatrixXf gPrime(QUAD_EKF_NUM_STATES, QUAD_EKF_NUM_STATES);
   gPrime.setIdentity();
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
+  //G_t = g' ( u_t, x_t, dt)
+  // gPrime's diagonals already set to 1.  Populate the rest of the Jacobian
+  gPrime(0,3) = dt;
+  gPrime(1,4) = dt;
+  gPrime(2,5) = dt;
+  gPrime(3,6) = (c(0) * accel).sum() * dt;
+  gPrime(4,6) = (c(1) * accel).sum() * dt;
+  gPrime(5,6) = (c(2) * accel).sum() * dt;
+  //std::cout<<gPrime<< "            "<< std::endl << "-------------------------------------------"<< std::endl;
+  gPrime.transposeInPlace();
+  //std::cout<<gPrime<< "            " << std::endl<<std::endl<<std::endl<< std::endl;
+  ekfCov = gPrime * ekfCov * gPrime + Q;  //transposeInPlace fails to compile
 
 
   /////////////////////////////// END STUDENT CODE ////////////////////////////
